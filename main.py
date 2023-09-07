@@ -62,6 +62,40 @@ def download():
                     status, done = downloader.next_chunk()
                     print('Download {0} {1}%'.format(item['name'], int(status.progress() * 100)))
 
+def make_score(path):
+    mid_path = glob.glob(os.path.join(path, '*.mid'))[0]
+
+    mid = m2.converter.parse(mid_path)
+
+    # Create musicxml
+    fn = mid.write("musicxml.pdf", mid_path.replace(".mid", ".pdf"))
+
+    # Get song name
+    song_name = re.findall(r"/(.+)_output", mid_path.split("/")[-1])
+
+    # Edit musicxml
+    with open(mid_path.replace(".mid", ".musicxml"), encoding="utf-8") as f:
+        data_lines = f.read()
+
+    # Change song name
+    data_lines = data_lines.replace("Music21 Fragment", str(*song_name))
+    # Change composer name
+    data_lines = data_lines.replace("Music21", "東京都市大学 大谷研究室")
+    # Change tempo position
+    data_lines = data_lines.replace("<direction>", '<direction placement="above">')
+
+    # Save musicxml
+    with open(
+        mid_path.replace(".mid", ".musicxml"),
+        mode="w",
+        encoding="utf-8",
+    ) as f:
+        f.write(data_lines)
+
+    # Save score from musicxml
+    s = m2.converter.parse(mid_path.replace(".mid", ".musicxml"))
+    fn = s.write("musicxml.pdf", mid_path.replace(".mid", ".pdf"))
+
 def main():
     download()
     path_list = glob.glob(os.path.join(data_dir, '*'))
@@ -69,7 +103,6 @@ def main():
         file_len = len(glob.glob(os.path.join(path, '*')))
         if file_len == 2:
             make_score(path)
-
 
 if __name__ == '__main__':
     main()
