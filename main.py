@@ -11,6 +11,7 @@ from googleapiclient.http import MediaIoBaseDownload
 from oauth2client.service_account import ServiceAccountCredentials
 
 data_dir = './data' # Directory to save files
+pattern = r"(.+?)_output_" # Pattern to get song name
 
 def download():
     '''
@@ -71,14 +72,15 @@ def make_score(path):
     fn = mid.write("musicxml.pdf", mid_path.replace(".mid", ".pdf"))
 
     # Get song name
-    song_name = re.findall(r"/(.+)_output", mid_path.split("/")[-1])
+    song_name = re.findall(pattern, mid_path.split('/')[-1])[0]
+    print(song_name)
 
     # Edit musicxml
     with open(mid_path.replace(".mid", ".musicxml"), encoding="utf-8") as f:
         data_lines = f.read()
 
     # Change song name
-    data_lines = data_lines.replace("Music21 Fragment", str(*song_name))
+    data_lines = data_lines.replace("Music21 Fragment", str(song_name))
     # Change composer name
     data_lines = data_lines.replace("Music21", "東京都市大学 大谷研究室")
     # Change tempo position
