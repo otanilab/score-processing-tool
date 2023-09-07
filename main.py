@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
-import glob
 import io
 import os
 import re
+import glob
+import time
+import shutil
 
 import music21 as m2
+from PIL import Image
 from pathlib import Path
 from httplib2 import Http
 from apiclient.discovery import build
@@ -13,6 +16,7 @@ from googleapiclient.http import MediaIoBaseDownload
 from oauth2client.service_account import ServiceAccountCredentials
 
 data_dir = './data' # Directory to save files
+output_dir = './output' # Directory to save output files
 pattern = r"(.+?)_output_" # Pattern to get song name
 
 def download():
@@ -108,18 +112,70 @@ def pdf_to_jpg(path):
     image = convert_from_path(str(pdf_path))[0]
     image.save(jpg_path, 'JPEG')
 
+def embed_qr(path):
+    '''
+    Embed QR code to jpg
+    '''
+    # Get image path
+    score_path = glob.glob(os.path.join(path, '*.jpg'))[0]
+    qr_path = glob.glob(os.path.join(path, '*.png'))[0]
+
+    # Embed QR code to score
+    score = Image.open(score_path)
+    qr = Image.open(qr_path)
+
+    # Embed QR code
+    score.paste(qr, (score.width - qr.width, score.height - qr.height))
+
+    # Get embed path
+    embed_path = output_dir + '/unprint/' + score_path.split('/')[-1]
+
+    # Create directory
+    if not os.path.exists(output_dir + '/unprint/'):
+        os.makedirs(output_dir + '/unprint/')
+
+    # Save image
+    score.save(embed_path)
+
+def print_score(path):
+    '''
+    Print score
+    '''
+    # os.system('lp ' + path)
+    print(path)
+
+    # Move file to printed directory
+    printed_path = os.path.join(output_dir, 'printed')
+    if not os.path.exists(printed_path):
+        os.makedirs(printed_path)
+    shutil.move(path, printed_path)
+
 def main():
+    # Download files
     download()
+
+    # Get file list
     path_list = glob.glob(os.path.join(data_dir, '*'))
     for path in path_list:
         file_len = len(glob.glob(os.path.join(path, '*')))
         if file_len == 2:
-            pdf_to_jpg(path)
+            make_score(path)
 
+    # Convert pdf to jpg snd embed QR code
     for path in path_list:
         file_len = len(glob.glob(os.path.join(path, '*')))
         if file_len == 4:
+            pdf_to_jpg(path)
             embed_qr(path)
 
+    # Print files
+    unprint_path_list = glob.glob(os.path.join(output_dir, 'unprint', '*'))
+    for path in unprint_path_list:
+        print_score(path)
+
 if __name__ == '__main__':
-    main()
+    # Run main function per 10 seconds
+    while True:
+        main()
+        time.sleep(10)
+
