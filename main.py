@@ -5,8 +5,10 @@ import os
 import re
 
 import music21 as m2
+from pathlib import Path
 from httplib2 import Http
 from apiclient.discovery import build
+from pdf2image import convert_from_path
 from googleapiclient.http import MediaIoBaseDownload
 from oauth2client.service_account import ServiceAccountCredentials
 
@@ -73,7 +75,6 @@ def make_score(path):
 
     # Get song name
     song_name = re.findall(pattern, mid_path.split('/')[-1])[0]
-    print(song_name)
 
     # Edit musicxml
     with open(mid_path.replace(".mid", ".musicxml"), encoding="utf-8") as f:
@@ -98,13 +99,27 @@ def make_score(path):
     s = m2.converter.parse(mid_path.replace(".mid", ".musicxml"))
     fn = s.write("musicxml.pdf", mid_path.replace(".mid", ".pdf"))
 
+def pdf_to_jpg(path):
+    '''
+    Convert pdf to jpg
+    '''
+    pdf_path = glob.glob(os.path.join(path, '*.pdf'))[0]
+    jpg_path = pdf_path.replace('.pdf', '.jpg')
+    image = convert_from_path(str(pdf_path))[0]
+    image.save(jpg_path, 'JPEG')
+
 def main():
     download()
     path_list = glob.glob(os.path.join(data_dir, '*'))
     for path in path_list:
         file_len = len(glob.glob(os.path.join(path, '*')))
         if file_len == 2:
-            make_score(path)
+            pdf_to_jpg(path)
+
+    for path in path_list:
+        file_len = len(glob.glob(os.path.join(path, '*')))
+        if file_len == 4:
+            embed_qr(path)
 
 if __name__ == '__main__':
     main()
