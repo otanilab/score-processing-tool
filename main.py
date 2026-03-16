@@ -5,6 +5,7 @@ import re
 import glob
 import json
 import time
+import signal
 import shutil
 import logging
 
@@ -240,8 +241,23 @@ def main():
         print_score(path)
 
 if __name__ == '__main__':
-    # Run main function per 10 seconds
-    while True:
-        main()
-        time.sleep(polling_interval_sec)
+    running = True
+
+    def shutdown_handler(signum, frame):
+        global running
+        logger.info('Shutdown signal received (signal=%s). Finishing current cycle...', signum)
+        running = False
+
+    signal.signal(signal.SIGINT, shutdown_handler)
+    signal.signal(signal.SIGTERM, shutdown_handler)
+
+    logger.info('Score processing tool started. Press Ctrl+C to stop.')
+    while running:
+        try:
+            main()
+        except Exception as e:
+            logger.error('Unexpected error in main loop: %s', e)
+        if running:
+            time.sleep(polling_interval_sec)
+    logger.info('Score processing tool stopped.')
 
