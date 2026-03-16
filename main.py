@@ -41,8 +41,8 @@ def download():
     '''
 
     # Check credentials
-    if not os.path.exists('credentials'):
-        logger.error('Please put credentials.json in credentials directory.')
+    if not os.path.exists(credentials_path):
+        logger.error('Credentials file not found: %s', credentials_path)
         exit(1)
 
     # Check data directory
@@ -53,7 +53,7 @@ def download():
     SCOPES = ['https://www.googleapis.com/auth/drive']
     try:
         credentials = service_account.Credentials.from_service_account_file(
-            'credentials/credentials.json', scopes=SCOPES
+            credentials_path, scopes=SCOPES
         )
         drive_service = build('drive', 'v3', credentials=credentials)
     except Exception as e:
@@ -64,7 +64,7 @@ def download():
     try:
         results = (
             drive_service.files()
-            .list(pageSize=10, fields='nextPageToken, files(id, name)')
+            .list(pageSize=drive_page_size, fields='nextPageToken, files(id, name)')
             .execute()
         )
         items = results.get('files', [])
@@ -130,7 +130,7 @@ def make_score(path):
     # Change song name
     data_lines = data_lines.replace("Music21 Fragment", str(song_name))
     # Change composer name
-    data_lines = data_lines.replace("Music21", "東京都市大学 大谷研究室")
+    data_lines = data_lines.replace("Music21", composer_name)
     # Change tempo position
     data_lines = data_lines.replace("<direction>", '<direction placement="above">')
 
@@ -243,5 +243,5 @@ if __name__ == '__main__':
     # Run main function per 10 seconds
     while True:
         main()
-        time.sleep(10)
+        time.sleep(polling_interval_sec)
 
