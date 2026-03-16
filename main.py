@@ -217,6 +217,11 @@ def print_score(path):
     except Exception as e:
         logger.error('Failed to move file %s: %s', path, e)
 
+def get_extensions(path):
+    '''Get set of file extensions in a directory'''
+    files = glob.glob(os.path.join(path, '*'))
+    return {os.path.splitext(f)[1].lower() for f in files}
+
 def main():
     # Download files
     download()
@@ -224,14 +229,24 @@ def main():
     # Get file list
     path_list = glob.glob(os.path.join(data_dir, '*'))
     for path in path_list:
-        file_len = len(glob.glob(os.path.join(path, '*')))
-        if file_len == 2:
+        if not os.path.isdir(path):
+            continue
+        exts = get_extensions(path)
+
+        # Stage 1: MIDI + PNG downloaded, but no PDF yet → create score
+        has_midi = '.mid' in exts
+        has_png = '.png' in exts
+        has_pdf = '.pdf' in exts
+        has_jpg = '.jpg' in exts
+
+        if has_midi and has_png and not has_pdf:
             make_score(path)
 
-    # Convert pdf to jpg snd embed QR code
-    for path in path_list:
-        file_len = len(glob.glob(os.path.join(path, '*')))
-        if file_len == 4:
+        # Stage 2: PDF exists but no JPG yet → convert and embed QR
+        exts = get_extensions(path)
+        has_pdf = '.pdf' in exts
+        has_jpg = '.jpg' in exts
+        if has_pdf and has_png and not has_jpg:
             pdf_to_jpg(path)
             embed_qr(path)
 
