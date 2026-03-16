@@ -184,14 +184,20 @@ def print_score(path):
     '''
     Print score
     '''
+    if not os.path.exists(path):
+        print('File not found: {0}'.format(path))
+        return
+
     # os.system('lp ' + path)
     print(path)
 
     # Move file to printed directory
-    printed_path = os.path.join(output_dir, 'printed')
-    if not os.path.exists(printed_path):
-        os.makedirs(printed_path)
-    shutil.move(path, printed_path)
+    try:
+        printed_path = os.path.join(output_dir, 'printed')
+        os.makedirs(printed_path, exist_ok=True)
+        shutil.move(path, printed_path)
+    except Exception as e:
+        print('Failed to move file {0}: {1}'.format(path, e))
 
 def main():
     # Download files
