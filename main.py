@@ -9,11 +9,10 @@ import shutil
 import music21 as m2
 from PIL import Image
 from pathlib import Path
-from httplib2 import Http
-from apiclient.discovery import build
 from pdf2image import convert_from_path
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
-from oauth2client.service_account import ServiceAccountCredentials
 
 data_dir = './data' # Directory to save files
 output_dir = './output' # Directory to save output files
