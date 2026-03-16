@@ -83,18 +83,31 @@ def download():
                         os.remove(fname)
 
 def make_score(path):
-    mid_path = glob.glob(os.path.join(path, '*.mid'))[0]
+    mid_files = glob.glob(os.path.join(path, '*.mid'))
+    if not mid_files:
+        print('No MIDI file found in {0}'.format(path))
+        return
+    mid_path = mid_files[0]
 
-    mid = m2.converter.parse(mid_path)
+    try:
+        mid = m2.converter.parse(mid_path)
+    except Exception as e:
+        print('Failed to parse MIDI file {0}: {1}'.format(mid_path, e))
+        return
 
     # Create musicxml
     fn = mid.write("musicxml.pdf", mid_path.replace(".mid", ".pdf"))
 
     # Get song name
-    song_name = re.findall(pattern, mid_path.split('/')[-1])[0]
+    matches = re.findall(pattern, mid_path.split('/')[-1])
+    if not matches:
+        print('Failed to extract song name from {0}'.format(mid_path))
+        return
+    song_name = matches[0]
 
     # Edit musicxml
-    with open(mid_path.replace(".mid", ".musicxml"), encoding="utf-8") as f:
+    musicxml_path = mid_path.replace(".mid", ".musicxml")
+    with open(musicxml_path, encoding="utf-8") as f:
         data_lines = f.read()
 
     # Change song name
@@ -105,16 +118,15 @@ def make_score(path):
     data_lines = data_lines.replace("<direction>", '<direction placement="above">')
 
     # Save musicxml
-    with open(
-        mid_path.replace(".mid", ".musicxml"),
-        mode="w",
-        encoding="utf-8",
-    ) as f:
+    with open(musicxml_path, mode="w", encoding="utf-8") as f:
         f.write(data_lines)
 
     # Save score from musicxml
-    s = m2.converter.parse(mid_path.replace(".mid", ".musicxml"))
-    fn = s.write("musicxml.pdf", mid_path.replace(".mid", ".pdf"))
+    try:
+        s = m2.converter.parse(musicxml_path)
+        fn = s.write("musicxml.pdf", mid_path.replace(".mid", ".pdf"))
+    except Exception as e:
+        print('Failed to create score PDF from {0}: {1}'.format(musicxml_path, e))
 
 def pdf_to_jpg(path):
     '''
