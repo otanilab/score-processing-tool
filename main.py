@@ -35,9 +35,10 @@ def download():
     # Set Google Drive API
     SCOPES = ['https://www.googleapis.com/auth/drive']
     try:
-        credentials = ServiceAccountCredentials.from_json_keyfile_name('credentials/credentials.json', SCOPES)
-        http_auth = credentials.authorize(Http())
-        drive_service = build('drive', 'v3', http=http_auth)
+        credentials = service_account.Credentials.from_service_account_file(
+            'credentials/credentials.json', scopes=SCOPES
+        )
+        drive_service = build('drive', 'v3', credentials=credentials)
     except Exception as e:
         print('Failed to authenticate with Google Drive: {0}'.format(e))
         return
