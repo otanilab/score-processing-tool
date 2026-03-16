@@ -8,6 +8,7 @@ import time
 import signal
 import shutil
 import logging
+import xml.etree.ElementTree as ET
 
 logging.basicConfig(
     level=logging.INFO,
