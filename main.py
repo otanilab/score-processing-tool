@@ -3,6 +3,7 @@ import io
 import os
 import re
 import glob
+import json
 import time
 import shutil
 import logging
@@ -22,9 +23,17 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 
-data_dir = './data' # Directory to save files
-output_dir = './output' # Directory to save output files
-pattern = r"(.+?)_output_" # Pattern to get song name
+config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.json')
+with open(config_path, encoding='utf-8') as f:
+    config = json.load(f)
+
+data_dir = config['data_dir']
+output_dir = config['output_dir']
+credentials_path = config['credentials_path']
+pattern = config['song_name_pattern']
+composer_name = config['composer_name']
+polling_interval_sec = config['polling_interval_sec']
+drive_page_size = config['drive_page_size']
 
 def download():
     '''
