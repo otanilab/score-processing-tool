@@ -9,11 +9,10 @@ import shutil
 import music21 as m2
 from PIL import Image
 from pathlib import Path
-from httplib2 import Http
-from apiclient.discovery import build
 from pdf2image import convert_from_path
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
-from oauth2client.service_account import ServiceAccountCredentials
 
 data_dir = './data' # Directory to save files
 output_dir = './output' # Directory to save output files
@@ -36,9 +35,10 @@ def download():
     # Set Google Drive API
     SCOPES = ['https://www.googleapis.com/auth/drive']
     try:
-        credentials = ServiceAccountCredentials.from_json_keyfile_name('credentials/credentials.json', SCOPES)
-        http_auth = credentials.authorize(Http())
-        drive_service = build('drive', 'v3', http=http_auth)
+        credentials = service_account.Credentials.from_service_account_file(
+            'credentials/credentials.json', scopes=SCOPES
+        )
+        drive_service = build('drive', 'v3', credentials=credentials)
     except Exception as e:
         print('Failed to authenticate with Google Drive: {0}'.format(e))
         return
