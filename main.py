@@ -35,17 +35,25 @@ def download():
 
     # Set Google Drive API
     SCOPES = ['https://www.googleapis.com/auth/drive']
-    credentials = ServiceAccountCredentials.from_json_keyfile_name('credentials/credentials.json', SCOPES)
-    http_auth = credentials.authorize(Http())
-    drive_service = build('drive', 'v3', http=http_auth)
+    try:
+        credentials = ServiceAccountCredentials.from_json_keyfile_name('credentials/credentials.json', SCOPES)
+        http_auth = credentials.authorize(Http())
+        drive_service = build('drive', 'v3', http=http_auth)
+    except Exception as e:
+        print('Failed to authenticate with Google Drive: {0}'.format(e))
+        return
 
     # Get file list
-    results = (
-        drive_service.files()
-        .list(pageSize=10, fields='nextPageToken, files(id, name)')
-        .execute()
-    )
-    items = results.get('files', [])
+    try:
+        results = (
+            drive_service.files()
+            .list(pageSize=10, fields='nextPageToken, files(id, name)')
+            .execute()
+        )
+        items = results.get('files', [])
+    except Exception as e:
+        print('Failed to get file list from Google Drive: {0}'.format(e))
+        return
 
     # Download files
     for item in items:
