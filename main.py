@@ -149,25 +149,36 @@ def embed_qr(path):
     Embed QR code to jpg
     '''
     # Get image path
-    score_path = glob.glob(os.path.join(path, '*.jpg'))[0]
-    qr_path = glob.glob(os.path.join(path, '*.png'))[0]
+    score_files = glob.glob(os.path.join(path, '*.jpg'))
+    qr_files = glob.glob(os.path.join(path, '*.png'))
+    if not score_files:
+        print('No JPG file found in {0}'.format(path))
+        return
+    if not qr_files:
+        print('No QR code PNG file found in {0}'.format(path))
+        return
+    score_path = score_files[0]
+    qr_path = qr_files[0]
 
-    # Embed QR code to score
-    score = Image.open(score_path)
-    qr = Image.open(qr_path)
+    try:
+        # Embed QR code to score
+        score = Image.open(score_path)
+        qr = Image.open(qr_path)
 
-    # Embed QR code
-    score.paste(qr, (score.width - qr.width, score.height - qr.height))
+        # Embed QR code
+        score.paste(qr, (score.width - qr.width, score.height - qr.height))
 
-    # Get embed path
-    embed_path = output_dir + '/unprint/' + score_path.split('/')[-1]
+        # Get embed path
+        unprint_dir = os.path.join(output_dir, 'unprint')
+        embed_path = os.path.join(unprint_dir, os.path.basename(score_path))
 
-    # Create directory
-    if not os.path.exists(output_dir + '/unprint/'):
-        os.makedirs(output_dir + '/unprint/')
+        # Create directory
+        os.makedirs(unprint_dir, exist_ok=True)
 
-    # Save image
-    score.save(embed_path)
+        # Save image
+        score.save(embed_path)
+    except Exception as e:
+        print('Failed to embed QR code in {0}: {1}'.format(path, e))
 
 def print_score(path):
     '''
