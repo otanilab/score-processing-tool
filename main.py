@@ -132,10 +132,17 @@ def pdf_to_jpg(path):
     '''
     Convert pdf to jpg
     '''
-    pdf_path = glob.glob(os.path.join(path, '*.pdf'))[0]
+    pdf_files = glob.glob(os.path.join(path, '*.pdf'))
+    if not pdf_files:
+        print('No PDF file found in {0}'.format(path))
+        return
+    pdf_path = pdf_files[0]
     jpg_path = pdf_path.replace('.pdf', '.jpg')
-    image = convert_from_path(str(pdf_path))[0]
-    image.save(jpg_path, 'JPEG')
+    try:
+        image = convert_from_path(str(pdf_path))[0]
+        image.save(jpg_path, 'JPEG')
+    except Exception as e:
+        print('Failed to convert PDF to JPG {0}: {1}'.format(pdf_path, e))
 
 def embed_qr(path):
     '''
