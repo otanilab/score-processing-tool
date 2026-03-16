@@ -33,7 +33,7 @@ def download():
 
     # Check credentials
     if not os.path.exists('credentials'):
-        print('Please put credentials.json in credentials directory.')
+        logger.error('Please put credentials.json in credentials directory.')
         exit(1)
 
     # Check data directory
@@ -48,7 +48,7 @@ def download():
         )
         drive_service = build('drive', 'v3', credentials=credentials)
     except Exception as e:
-        print('Failed to authenticate with Google Drive: {0}'.format(e))
+        logger.error('Failed to authenticate with Google Drive: %s', e)
         return
 
     # Get file list
@@ -60,7 +60,7 @@ def download():
         )
         items = results.get('files', [])
     except Exception as e:
-        print('Failed to get file list from Google Drive: {0}'.format(e))
+        logger.error('Failed to get file list from Google Drive: %s', e)
         return
 
     # Download files
@@ -84,23 +84,23 @@ def download():
                         done = False
                         while done is False:
                             status, done = downloader.next_chunk()
-                            print('Download {0} {1}%'.format(item['name'], int(status.progress() * 100)))
+                            logger.info('Download %s %d%%', item['name'], int(status.progress() * 100))
                 except Exception as e:
-                    print('Failed to download {0}: {1}'.format(item['name'], e))
+                    logger.error('Failed to download %s: %s', item['name'], e)
                     if os.path.exists(fname):
                         os.remove(fname)
 
 def make_score(path):
     mid_files = glob.glob(os.path.join(path, '*.mid'))
     if not mid_files:
-        print('No MIDI file found in {0}'.format(path))
+        logger.warning('No MIDI file found in %s', path)
         return
     mid_path = mid_files[0]
 
     try:
         mid = m2.converter.parse(mid_path)
     except Exception as e:
-        print('Failed to parse MIDI file {0}: {1}'.format(mid_path, e))
+        logger.error('Failed to parse MIDI file %s: %s', mid_path, e)
         return
 
     # Create musicxml
@@ -109,7 +109,7 @@ def make_score(path):
     # Get song name
     matches = re.findall(pattern, mid_path.split('/')[-1])
     if not matches:
-        print('Failed to extract song name from {0}'.format(mid_path))
+        logger.warning('Failed to extract song name from %s', mid_path)
         return
     song_name = matches[0]
 
@@ -134,7 +134,7 @@ def make_score(path):
         s = m2.converter.parse(musicxml_path)
         fn = s.write("musicxml.pdf", mid_path.replace(".mid", ".pdf"))
     except Exception as e:
-        print('Failed to create score PDF from {0}: {1}'.format(musicxml_path, e))
+        logger.error('Failed to create score PDF from %s: %s', musicxml_path, e)
 
 def pdf_to_jpg(path):
     '''
@@ -142,7 +142,7 @@ def pdf_to_jpg(path):
     '''
     pdf_files = glob.glob(os.path.join(path, '*.pdf'))
     if not pdf_files:
-        print('No PDF file found in {0}'.format(path))
+        logger.warning('No PDF file found in %s', path)
         return
     pdf_path = pdf_files[0]
     jpg_path = pdf_path.replace('.pdf', '.jpg')
@@ -150,7 +150,7 @@ def pdf_to_jpg(path):
         image = convert_from_path(str(pdf_path))[0]
         image.save(jpg_path, 'JPEG')
     except Exception as e:
-        print('Failed to convert PDF to JPG {0}: {1}'.format(pdf_path, e))
+        logger.error('Failed to convert PDF to JPG %s: %s', pdf_path, e)
 
 def embed_qr(path):
     '''
@@ -160,10 +160,10 @@ def embed_qr(path):
     score_files = glob.glob(os.path.join(path, '*.jpg'))
     qr_files = glob.glob(os.path.join(path, '*.png'))
     if not score_files:
-        print('No JPG file found in {0}'.format(path))
+        logger.warning('No JPG file found in %s', path)
         return
     if not qr_files:
-        print('No QR code PNG file found in {0}'.format(path))
+        logger.warning('No QR code PNG file found in %s', path)
         return
     score_path = score_files[0]
     qr_path = qr_files[0]
@@ -186,18 +186,18 @@ def embed_qr(path):
         # Save image
         score.save(embed_path)
     except Exception as e:
-        print('Failed to embed QR code in {0}: {1}'.format(path, e))
+        logger.error('Failed to embed QR code in %s: %s', path, e)
 
 def print_score(path):
     '''
     Print score
     '''
     if not os.path.exists(path):
-        print('File not found: {0}'.format(path))
+        logger.warning('File not found: %s', path)
         return
 
     # os.system('lp ' + path)
-    print(path)
+    logger.info('Printing: %s', path)
 
     # Move file to printed directory
     try:
@@ -205,7 +205,7 @@ def print_score(path):
         os.makedirs(printed_path, exist_ok=True)
         shutil.move(path, printed_path)
     except Exception as e:
-        print('Failed to move file {0}: {1}'.format(path, e))
+        logger.error('Failed to move file %s: %s', path, e)
 
 def main():
     # Download files
