@@ -1,0 +1,9 @@
+{
+    "data_dir": "./data",
+    "output_dir": "./output",
+    "credentials_path": "credentials/credentials.json",
+    "song_name_pattern": "(.+?)_output_",
+    "composer_name": "東京都市大学 大谷研究室",
+    "polling_interval_sec": 10,
+    "drive_page_size": 10
+}
