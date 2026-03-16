@@ -8,6 +8,7 @@ import time
 import signal
 import shutil
 import logging
+import xml.etree.ElementTree as ET
 
 logging.basicConfig(
     level=logging.INFO,
@@ -123,21 +124,34 @@ def make_score(path):
         return
     song_name = matches[0]
 
-    # Edit musicxml
+    # Edit musicxml using XML parser
     musicxml_path = mid_path.replace(".mid", ".musicxml")
-    with open(musicxml_path, encoding="utf-8") as f:
-        data_lines = f.read()
+    tree = ET.parse(musicxml_path)
+    root = tree.getroot()
 
-    # Change song name
-    data_lines = data_lines.replace("Music21 Fragment", str(song_name))
-    # Change composer name
-    data_lines = data_lines.replace("Music21", composer_name)
-    # Change tempo position
-    data_lines = data_lines.replace("<direction>", '<direction placement="above">')
+    # Detect namespace
+    ns = ''
+    if root.tag.startswith('{'):
+        ns = root.tag.split('}')[0] + '}'
+
+    # Change song name (work-title, movement-title)
+    for tag in ['work-title', 'movement-title']:
+        for elem in root.iter(ns + tag):
+            if elem.text and 'Music21' in elem.text:
+                elem.text = song_name
+
+    # Change composer name (creator with type="composer")
+    for elem in root.iter(ns + 'creator'):
+        if elem.get('type') == 'composer' or (elem.text and 'Music21' in elem.text):
+            elem.text = composer_name
+
+    # Change tempo position (add placement="above" to direction)
+    for elem in root.iter(ns + 'direction'):
+        if elem.get('placement') is None:
+            elem.set('placement', 'above')
 
     # Save musicxml
-    with open(musicxml_path, mode="w", encoding="utf-8") as f:
-        f.write(data_lines)
+    tree.write(musicxml_path, encoding='unicode', xml_declaration=True)
 
     # Save score from musicxml
     try:
