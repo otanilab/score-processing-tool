@@ -61,13 +61,18 @@ def download():
         fname = os.path.join(fdir, item['name'])
         if not os.path.exists(fname):
             if '.mid' in item['name'] or '.png' in item['name']:
-                request = drive_service.files().get_media(fileId=item['id'])
-                fh = io.FileIO(fname, 'wb')
-                downloader = MediaIoBaseDownload(fh, request)
-                done = False
-                while done is False:
-                    status, done = downloader.next_chunk()
-                    print('Download {0} {1}%'.format(item['name'], int(status.progress() * 100)))
+                try:
+                    request = drive_service.files().get_media(fileId=item['id'])
+                    with io.FileIO(fname, 'wb') as fh:
+                        downloader = MediaIoBaseDownload(fh, request)
+                        done = False
+                        while done is False:
+                            status, done = downloader.next_chunk()
+                            print('Download {0} {1}%'.format(item['name'], int(status.progress() * 100)))
+                except Exception as e:
+                    print('Failed to download {0}: {1}'.format(item['name'], e))
+                    if os.path.exists(fname):
+                        os.remove(fname)
 
 def make_score(path):
     mid_path = glob.glob(os.path.join(path, '*.mid'))[0]
